@@ -39,7 +39,6 @@ nosetests.xml
 junit*.xml
 
 # ---- Machine learning outputs ----
-# Ignore runtime & ML output
 backend/uploads/
 backend/pipeline_outputs/
 backend/outputs/
