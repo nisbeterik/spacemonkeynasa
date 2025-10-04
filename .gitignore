@@ -38,6 +38,15 @@ htmlcov/
 nosetests.xml
 junit*.xml
 
+# ---- Machine learning outputs ----
+backend/uploads/
+backend/pipeline_outputs/
+backend/outputs/
+backend/outputs_confirmed/
+*.joblib
+*.csv
+!backend/data/*.csv   # keep only the source data
+
 # ===== Node / Vite (frontend) =====
 node_modules/
 dist/
