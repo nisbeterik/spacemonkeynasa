@@ -1,2 +1,54 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.log
+
+# --- Virtual environments ---
 venv/
 .venv/
+env/
+.env/
+
+# --- Django stuff ---
+db.sqlite3
+media/
+staticfiles/
+*.pot
+*.pyc
+*.mo
+
+# --- Environment variables ---
+.env
+*.env
+.env.*
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# --- macOS / Linux ---
+.DS_Store
+Thumbs.db
+*~
+
+# --- Migrations (optional if auto-generated) ---
+# Uncomment if you don't want to track migrations for now:
+# */migrations/__pycache__/
+# */migrations/*.py
+
+# --- Coverage / testing ---
+htmlcov/
+.coverage
+.coverage.*
+.tox/
+nosetests.xml
+test_*.log
+jun
