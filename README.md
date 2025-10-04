@@ -9,8 +9,22 @@ cd backend
 ### 2. Create virtual environment
 python3.12 -m venv .venv
 source .venv/bin/activate   # Linux/Mac
-# OR
+## OR
 .venv\Scripts\activate      # Windows PowerShell
+
+#### If the windows command didn't work:-
+1. Download Django [here](https://www.djangoproject.com/download/)
+
+2. Run PowerShell as Administrator
+
+3. Allow local scripts to run in Windows Machine, press A to accept all settings
+```
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+4. Go to backend folder and run:-
+```
+.venv\Scripts\activate 
+```
 
 ### 3. Upgrade pip and install dependencies
 python -m pip install --upgrade pip
