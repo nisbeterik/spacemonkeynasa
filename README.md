@@ -1,4 +1,4 @@
-# spacemonkeynasa
+# spacemonkeynasa / Hunting EXO-planets  
 
 ## Backend
 
