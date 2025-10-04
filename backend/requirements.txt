@@ -52,3 +52,5 @@ urllib3==2.5.0
 wcwidth==0.2.14
 webencodings==0.5.1
 yarg==0.1.9
+django==5.2.7
+djangorestframework==3.16.1
