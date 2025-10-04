@@ -7,7 +7,7 @@ git clone https://github.com/username/my-django-app.git
 cd backend
 
 ### 2. Create virtual environment
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate   # Linux/Mac
 # OR
 .venv\Scripts\activate      # Windows PowerShell
