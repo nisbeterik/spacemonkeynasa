@@ -1,119 +1,138 @@
-# exoplanet_classifier.py
-
-import os
+import argparse
+from pathlib import Path
+import numpy as np
 import pandas as pd
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (
+    classification_report, confusion_matrix, roc_auc_score,
+    average_precision_score
+)
+from sklearn.impute import SimpleImputer
+import joblib
 
-def resolve_file_path(relative_path):
-    """
-    Construct and verify the absolute path of a file relative to this script.
-    Raises FileNotFoundError if the file does not exist.
-    """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    abs_path = os.path.join(base_dir, relative_path)
-    abs_path = os.path.normpath(abs_path)  # normalize ../ etc.
+# Default feature set; the script will auto-drop ones not present in the CSV.
+FEATURES = [
+    "koi_period", "koi_duration", "koi_depth", "koi_prad",
+    "koi_steff", "koi_slogg", "koi_srad",
+    "koi_teq", "koi_insol",
+]
 
-    if not os.path.exists(abs_path):
-        raise FileNotFoundError(f"[ERROR] File not found: {abs_path}")
-    
-    print(f"[INFO] Verified file path: {abs_path}")
-    return abs_path
+def load_koi_data(file_path: str) -> pd.DataFrame:
+    """Load KOI CSV (NASA Kepler cumulative table) with # comments allowed."""
+    return pd.read_csv(file_path, comment="#")
 
-def load_koi_data(file_path):
+def make_labels(df: pd.DataFrame, positive_mode: str) -> pd.Series:
     """
-    Load KOI CSV file from NASA archive and return a pandas DataFrame.
+    Map dispositions to binary labels.
+    positive_mode:
+      - 'confirmed+candidate': CONFIRMED and CANDIDATE are positive (1)
+      - 'confirmed': only CONFIRMED is positive (1)
     """
-    print(f"[INFO] Loading KOI data from: {file_path}")
-    df = pd.read_csv(file_path, comment='#')
-    print(f"[INFO] Loaded {len(df)} rows and {len(df.columns)} columns")
-    return df
+    if positive_mode == "confirmed+candidate":
+        mapping = {"CONFIRMED": 1, "CANDIDATE": 1, "FALSE POSITIVE": 0}
+    elif positive_mode == "confirmed":
+        mapping = {"CONFIRMED": 1, "CANDIDATE": 0, "FALSE POSITIVE": 0}
+    else:
+        raise ValueError("positive_mode must be 'confirmed+candidate' or 'confirmed'")
+    return df["koi_disposition"].map(mapping)
 
-def preprocess_data(df, label_mapping={'CONFIRMED': 1, 'CANDIDATE': 1, 'FALSE POSITIVE': 0}):
-    """
-    Preprocess the KOI data:
-    - Map dispositions to binary labels
-    - Fill missing values
-    - Select relevant features
-    """
-    print("[INFO] Preprocessing data...")
-    df['label'] = df['koi_disposition'].map(label_mapping)
-    df = df.dropna(subset=['label'])
+def select_available_features(df: pd.DataFrame) -> list[str]:
+    """Use only features that actually exist in the CSV."""
+    feats = [f for f in FEATURES if f in df.columns]
+    if not feats:
+        raise ValueError(
+            "None of the expected feature columns found.\n"
+            f"Expected any of: {FEATURES}\nGot columns like: {list(df.columns)[:30]}"
+        )
+    return feats
 
-    features = [
-        'koi_period', 'koi_duration', 'koi_depth', 'koi_prad',
-        'koi_steff', 'koi_slogg', 'koi_srad',
-        'koi_teq', 'koi_insol'
-    ]
-    
-    X = df[features].fillna(df[features].median())
-    y = df['label']
-    
-    print(f"[INFO] Selected {len(features)} features")
-    print(f"[INFO] Dataset shape: X={X.shape}, y={y.shape}")
-    return X, y
+def preprocess_data(df: pd.DataFrame, positive_mode: str):
+    """Create labels, select features, median-impute missing values."""
+    y = make_labels(df, positive_mode)
+    df = df.loc[~y.isna()].copy()
+    y = y.loc[df.index].astype(int)
+
+    feats = select_available_features(df)
+    X = df[feats].copy()
+
+    imputer = SimpleImputer(strategy="median")
+    X_imputed = imputer.fit_transform(X)
+
+    return X_imputed, y.values, feats, imputer, df
 
 def split_data(X, y, test_size=0.2, random_state=42):
-    """
-    Split features and labels into training and test sets
-    """
-    print(f"[INFO] Splitting data: test_size={test_size}")
-    return train_test_split(X, y, test_size=test_size, random_state=random_state)
+    """Stratified split to keep class balance similar across splits."""
+    return train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
 
-def train_random_forest(X_train, y_train, n_estimators=100, random_state=42):
-    """
-    Train a Random Forest classifier on the training data
-    """
-    print(f"[INFO] Training Random Forest with {n_estimators} estimators...")
+def train_random_forest(X_train, y_train, n_estimators=300, random_state=42):
+    """RandomForest with class_weight to handle imbalance."""
     clf = RandomForestClassifier(
         n_estimators=n_estimators,
         random_state=random_state,
-        class_weight='balanced',
-        verbose=1
+        class_weight="balanced",
+        n_jobs=-1,
     )
     clf.fit(X_train, y_train)
-    print("[INFO] Training complete")
     return clf
 
 def evaluate_model(clf, X_test, y_test):
-    """
-    Evaluate classifier performance and print metrics
-    """
-    print("[INFO] Evaluating model...")
-    y_pred = clf.predict(X_test)
-    report = classification_report(y_test, y_pred)
+    """Print metrics and return a dict."""
+    proba = clf.predict_proba(X_test)[:, 1]
+    y_pred = (proba >= 0.5).astype(int)
+
+    report = classification_report(y_test, y_pred, digits=4)
     cm = confusion_matrix(y_test, y_pred)
+    roc = roc_auc_score(y_test, proba)
+    ap = average_precision_score(y_test, proba)
+
     print("Classification Report:\n", report)
     print("Confusion Matrix:\n", cm)
-    return report, cm
+    print(f"ROC-AUC: {roc:.4f} | PR-AUC: {ap:.4f}")
 
-def scale_features(X_train, X_test):
-    """
-    Standardize features (optional, useful for SVM/Logistic Regression)
-    """
-    print("[INFO] Scaling features...")
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-    return X_train_scaled, X_test_scaled
+    return {"report": report, "cm": cm, "roc": roc, "ap": ap}
 
-# Main pipeline
-def run_pipeline(relative_file_path):
-    """
-    Full pipeline: resolve path, load data, preprocess, train, evaluate
-    """
-    file_path = resolve_file_path(relative_file_path)
+def save_artifacts(clf, imputer, feats, df_raw, out_dir: Path):
+    """Save model, feature importances, and per-object probabilities."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Feature importance
+    fi = pd.DataFrame({"feature": feats, "importance": clf.feature_importances_}) \
+            .sort_values("importance", ascending=False)
+    fi.to_csv(out_dir / "feature_importance.csv", index=False)
+
+    # Predictions for ALL rows (handy for triage)
+    X_all = df_raw[feats]
+    X_all_imp = imputer.transform(X_all)
+    proba_all = clf.predict_proba(X_all_imp)[:, 1]
+
+    id_col = "kepoi_name" if "kepoi_name" in df_raw.columns else ("kepid" if "kepid" in df_raw.columns else None)
+    preds = pd.DataFrame({
+        "object_id": df_raw[id_col] if id_col else pd.RangeIndex(len(df_raw)),
+        "koi_disposition": df_raw.get("koi_disposition"),
+        "prob_exoplanet": proba_all,
+    })
+    preds.sort_values("prob_exoplanet", ascending=False).to_csv(out_dir / "predictions.csv", index=False)
+
+    # Save the trained model + imputer together
+    joblib.dump({"model": clf, "imputer": imputer, "features": feats}, out_dir / "rf_exoplanet_model.joblib")
+
+def run_pipeline(file_path: str, positive_mode: str, out_dir: str = "outputs"):
     df = load_koi_data(file_path)
-    X, y = preprocess_data(df)
+    X, y, feats, imputer, df_kept = preprocess_data(df, positive_mode)
     X_train, X_test, y_train, y_test = split_data(X, y)
     clf = train_random_forest(X_train, y_train)
-    report, cm = evaluate_model(clf, X_test, y_test)
-    print("[INFO] Pipeline finished successfully")
-    return clf, report, cm
+    _ = evaluate_model(clf, X_test, y_test)
+    save_artifacts(clf, imputer, feats, df_kept, Path(out_dir))
+    return clf
 
 if __name__ == "__main__":
-    # Example usage:
-    relative_file_path = "./data/cumulative_2025.10.04_01.59.40.csv"
-    run_pipeline(relative_file_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--csv", default="./data/cumulative_2025.10.04_01.59.40.csv", help="Path to KOI cumulative CSV")
+    parser.add_argument("--positive", choices=["confirmed+candidate", "confirmed"], default="confirmed+candidate",
+                        help="Which dispositions count as positive (1).")
+    parser.add_argument("--out", default="outputs", help="Directory to save results")
+    args = parser.parse_args()
+
+    run_pipeline(args.csv, args.positive, args.out)
