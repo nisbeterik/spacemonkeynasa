@@ -6,7 +6,7 @@ function handleGetStarted() {
 
 <template>
   <div class="space-page">
-    <img alt="SpaceMonkey logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <img alt="SpaceMonkey logo" class="logo" src="./assets/logo.svg" width="300" height="300" />
     <div class="wrapper">
       <h1>Welcome to SpaceMonkey Exoplanet Hunter</h1>
       <p>Discover new worlds beyond our solar system using AI-powered tools!</p>
@@ -45,7 +45,7 @@ html, body, #app {
 
 /* Logo styling */
 .logo {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   filter: drop-shadow(0 0 10px #0ff);
 }
 
