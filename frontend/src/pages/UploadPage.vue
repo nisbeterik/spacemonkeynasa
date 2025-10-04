@@ -1,27 +1,35 @@
 <script setup>
 import { ref } from 'vue'
+import { predict } from '@/api/api.js'
 
 const csvFile = ref(null)
 const isLoading = ref(false)
+const predictionResult = ref(null)
 
 function handleFileChange(event) {
   csvFile.value = event.target.files[0]
   console.log('Selected file:', csvFile.value)
 }
 
-function handlePredict() {
+async function handlePredict() {
   if (!csvFile.value) {
     alert('Please upload a CSV file first.')
     return
   }
-  isLoading.value = true
-  console.log(`Ready to predict for file: ${csvFile.value.name}`)
 
-  // Fake loading animation for 5s
-  setTimeout(() => {
+  try {
+    isLoading.value = true
+    predictionResult.value = null
+
+    const result = await predict(csvFile.value)
+    predictionResult.value = result
+    console.log('Prediction result:', result)
+  } catch (error) {
+    console.error('Prediction failed:', error)
+    alert('Prediction failed. Check console for details.')
+  } finally {
     isLoading.value = false
-    alert(`Prediction complete for file: ${csvFile.value.name}`)
-  }, 5000)
+  }
 }
 </script>
 
@@ -30,7 +38,7 @@ function handlePredict() {
     <div class="logo-container">
       <img alt="SpaceMonkey logo" class="logo" src="../assets/logo.svg" />
 
-      <!-- Orbiting Earth animation -->
+      <!-- orbiting earth animation -->
       <div v-if="isLoading" class="orbit">
         <div class="earth"></div>
       </div>
@@ -45,20 +53,24 @@ function handlePredict() {
       </p>
 
       <div class="upload-section">
-        <input 
-          type="file" 
-          accept=".csv" 
+        <input
+          type="file"
+          accept=".csv"
           @change="handleFileChange"
           class="file-input"
         />
         <button @click="handlePredict">Predict</button>
+      </div>
+
+      <!-- optional: display prediction -->
+      <div v-if="predictionResult" class="result">
+        <pre>{{ predictionResult }}</pre>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Fullscreen layout */
 .space-page {
   position: fixed;
   inset: 0;
@@ -72,7 +84,6 @@ function handlePredict() {
   padding: 2rem;
 }
 
-/* Logo + orbit container */
 .logo-container {
   position: relative;
   width: 250px;
@@ -88,20 +99,18 @@ function handlePredict() {
   z-index: 2;
 }
 
-/* Orbit wrapper */
 .orbit {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 200px;
   height: 200px;
-  margin: -100px 0 0 -100px; /* center orbit */
+  margin: -100px 0 0 -100px;
   border-radius: 50%;
   animation: spin 4s linear infinite;
   z-index: 1;
 }
 
-/* Earth */
 .earth {
   width: 30px;
   height: 30px;
@@ -114,13 +123,11 @@ function handlePredict() {
   margin-left: -15px;
 }
 
-/* Orbit spinning */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-/* Text styling */
 .wrapper h1 {
   font-size: 2.2rem;
   margin-bottom: 1rem;
@@ -136,7 +143,6 @@ function handlePredict() {
   margin-inline: auto;
 }
 
-/* Upload section */
 .upload-section {
   display: flex;
   flex-direction: column;
@@ -144,7 +150,6 @@ function handlePredict() {
   gap: 2rem;
 }
 
-/* File input */
 .file-input {
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid #0ff;
@@ -154,7 +159,6 @@ function handlePredict() {
   cursor: pointer;
 }
 
-/* Button */
 button {
   background: linear-gradient(180deg, #0ff, #08f);
   color: #000;
@@ -171,5 +175,15 @@ button {
 button:hover {
   transform: scale(1.05);
   box-shadow: 0 0 25px #0ff, 0 0 50px #08f inset;
+}
+
+.result {
+  margin-top: 2rem;
+  background: rgba(0, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 10px;
+  color: #0ff;
+  max-width: 600px;
+  overflow-x: auto;
 }
 </style>
