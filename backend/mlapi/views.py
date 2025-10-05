@@ -9,21 +9,27 @@ import tempfile
 from typing import List, Optional
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import joblib
 from sklearn.metrics import classification_report
 
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
-# ---- import your ML helpers ----
+# ---- import your ML helpers (package-local, not 'backend.*') ----
 from ml.infer import predict_df, get_model
 from ml.features import FEATURES
 
 log = logging.getLogger(__name__)
+
+# ---- model/schema locations (relative to Django BASE_DIR) ----
+MODEL_PATH: Path = settings.BASE_DIR / "ml" / "model.pkl"
+SCHEMA_PATH: Path = settings.BASE_DIR / "ml" / "schema.json"
 
 # ---- API tunables ----
 THRESHOLD: float = 0.50
@@ -95,19 +101,22 @@ def index(_request):
             "/api/train_csv",
             "/api/check_exo_csv",
             "/api/koi_status",
+            "/api/check_exo_status_csv",
+            "/api/evaluate_pair_csv",
         ],
     })
 
 @require_http_methods(["GET"])
 def health(_request):
     try:
-        model = get_model("backend/ml/model.pkl")
+        model = get_model(str(MODEL_PATH))
         clf = getattr(model, "named_steps", {}).get("clf", None)
         return JsonResponse({
             "ok": True,
             "model_loaded": model is not None,
             "has_clf_step": clf is not None,
             "n_features": len(FEATURES),
+            "model_path": str(MODEL_PATH),
         })
     except Exception as e:
         log.exception("health failed")
@@ -166,7 +175,7 @@ def predict_csv(request):
         if len(df) > MAX_ROWS_CSV:
             return JsonResponse({"detail": f"CSV too large (> {MAX_ROWS_CSV} rows)"}, status=413)
 
-        model = get_model("backend/ml/model.pkl")
+        model = get_model(str(MODEL_PATH))
         X = _ensure_feature_columns(df.copy())
         probs = model.predict_proba(X)[:, 1]
         labels = (probs >= THRESHOLD).astype(int)
@@ -188,7 +197,7 @@ def predict_csv(request):
 @require_http_methods(["GET"])
 def feature_importances(_request):
     try:
-        model = get_model("backend/ml/model.pkl")
+        model = get_model(str(MODEL_PATH))
         clf = getattr(model, "named_steps", {}).get("clf", model)
 
         importances = None
@@ -219,7 +228,7 @@ def feature_importances(_request):
 def train_csv(request):
     """
     Upload: 'file' (KOI CSV).
-    Trains and saves backend/ml/model.pkl & backend/ml/schema.json.
+    Trains and saves ml/model.pkl & ml/schema.json.
     Returns metrics.
     """
     f = request.FILES.get("file")
@@ -246,7 +255,7 @@ def train_csv(request):
                 X[c] = None
         X = X[FEATURES].apply(pd.to_numeric, errors="coerce")
 
-        from backend.ml.train import train_model
+        from ml.train import train_model
         model = train_model(X, y)
 
         # quick eval
@@ -255,15 +264,16 @@ def train_csv(request):
         pred = model.predict(Xte)
         rep = classification_report(yte, pred, output_dict=True, digits=3)
 
-        os.makedirs("backend/ml", exist_ok=True)
-        joblib.dump(model, "backend/ml/model.pkl")
-        with open("backend/ml/schema.json", "w") as fh:
+        # save artifacts under BASE_DIR/ml
+        (settings.BASE_DIR / "ml").mkdir(parents=True, exist_ok=True)
+        joblib.dump(model, MODEL_PATH)
+        with open(SCHEMA_PATH, "w") as fh:
             json.dump({"features": FEATURES}, fh)
 
         return JsonResponse({
             "ok": True,
-            "saved_model": "backend/ml/model.pkl",
-            "saved_schema": "backend/ml/schema.json",
+            "saved_model": str(MODEL_PATH),
+            "saved_schema": str(SCHEMA_PATH),
             "metrics": rep
         })
     except Exception as e:
@@ -299,7 +309,7 @@ def check_exo_csv(request):
 
         # Predict
         X = _ensure_feature_columns(df_in.copy())
-        model = get_model("backend/ml/model.pkl")
+        model = get_model(str(MODEL_PATH))
         probs = model.predict_proba(X)[:, 1]
         labels = (probs >= THRESHOLD).astype(int)
 
@@ -329,7 +339,7 @@ def check_exo_csv(request):
             disposition_using_kepler_data = merged.get("koi_pdisposition")
         )
 
-        # ---- NEW: unified 'status' column ----
+        # Unified 'status' column
         disp = merged["exoplanet_archive_disposition"].fillna("")
         merged["status"] = np.where(
             disp.eq("CONFIRMED"), "CONFIRMED_EXOPLANET",
@@ -343,7 +353,7 @@ def check_exo_csv(request):
         preferred = [
             "kepid","kepoi_name","kepler_name",
             "exoplanet_archive_disposition","disposition_using_kepler_data",
-            "status",                          # <-- here
+            "status",
             "planet_like_prob","planet_like_label"
         ]
         front = [c for c in preferred if c in merged.columns]
@@ -359,7 +369,6 @@ def check_exo_csv(request):
     except Exception as e:
         log.exception("check_exo_csv failed")
         return JsonResponse({"detail": str(e)}, status=400)
-
 
 # ---------- KOI / Kepler status lookup ----------
 @csrf_exempt
@@ -405,7 +414,7 @@ def koi_status(request):
     except Exception as e:
         log.exception("koi_status failed")
         return JsonResponse({"detail": str(e)}, status=400)
-    
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def check_exo_status_csv(request):
