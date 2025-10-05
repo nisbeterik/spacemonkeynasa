@@ -64,6 +64,7 @@
               Learn more
             </a>
           </div>
+          <p class="features-label">Features:</p>
           <ul class="pills" aria-label="Key capabilities">
             <li>Transit Detection</li>
             <li>Model Training</li>
@@ -116,7 +117,7 @@
 /* ---------- Layout ---------- */
 .home {
   position: relative;
-  min-height: 100vh;
+  min-height: 100vhs;
   width: 100%;
   color: var(--text);
   background: radial-gradient(1200px 800px at 70% 20%, #151a33, var(--bg)) fixed;
@@ -237,13 +238,14 @@
   line-height: 1.05;
   letter-spacing: -0.02em;
   margin: 0 0 12px;
+
   background: linear-gradient(135deg, var(--primary-1), var(--primary-2));
-  -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 30px rgba(99,102,241,0.18);
+  -webkit-background-clip: text;       /* Safari/Chrome */
+  text-shadow: 0 0 30px #6366f1b0;
 }
 
+/* give the chip its own text color so it doesn’t inherit transparent */
 .ai-chip {
   display: inline-block;
   font-size: 0.55em;
@@ -254,6 +256,10 @@
   border: 1px solid var(--border);
   vertical-align: 0.1em;
   backdrop-filter: blur(6px);
+
+  color: #e5e7eb;                   /* visible text */
+  -webkit-text-fill-color: #e5e7eb; /* Safari */
+  font-weight: 700;                  /* optional pop */
 }
 
 .lead {
@@ -298,6 +304,14 @@
 .btn.ghost {
   color: var(--text);
   backdrop-filter: blur(6px);
+}
+
+.features-label {
+  margin: 6px 0 2px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--text);
+  opacity: .9;
 }
 
 .pills {
