@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-9ioxw8clm*ypndif1skfz$4e1@j%gnaqn3i%6mk!^xkwrzof3#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.2.137', 'localhost', '127.0.0.1', '192.168.3.41']
+ALLOWED_HOSTS = ['https://spacemonkeynasa.onrender.com', '*']
 
 
 # Application definition
@@ -52,7 +52,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://192.168.2.137:5173",
+    "https://spacemonkeynasa.onrender.com"
 ]
 
 MIDDLEWARE = [
