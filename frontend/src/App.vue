@@ -1,6 +1,6 @@
 <!-- src/App.vue -->
 <template>
-  <div>
+  <div class="main-container">
     <nav class="nav">
       <router-link to="/" class="brand">SpaceMonkey</router-link>
       <div class="links">
@@ -15,6 +15,13 @@
 </script>
 
 <style scoped>
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+}
 .nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px; background: #0b1220; border-bottom: 1px solid #1f2937;
