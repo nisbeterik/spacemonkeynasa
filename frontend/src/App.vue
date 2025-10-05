@@ -8,7 +8,7 @@
       </router-link>
 
       <div class="links">
-        <router-link to="/upload">Upload</router-link>
+        <router-link to="/upload">Find Exoplanet</router-link>
       </div>
     </nav>
 

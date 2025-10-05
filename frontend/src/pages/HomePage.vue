@@ -58,7 +58,7 @@
           </p>
           <div class="cta">
             <router-link class="btn primary" to="/upload" aria-label="Go to Uploads to train the model">
-              🚀 Go to Uploads
+              🚀 Lets Find Exoplanet
             </router-link>
             <a class="btn ghost" href="#how-it-works">
               Learn more
