@@ -5,6 +5,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import App from './App.vue';
 import HomePage from './pages/HomePage.vue';
 import UploadPage from './pages/UploadPage.vue';
+import AboutUs from './pages/AboutUs.vue'
 
 import './assets/base.css';
 import './assets/main.css';
@@ -14,6 +15,8 @@ const router = createRouter({
   routes: [
     { path: '/', component: HomePage },
     { path: '/upload', component: UploadPage },
+    { path: '/about', component: AboutUs },
+
   ],
 });
 

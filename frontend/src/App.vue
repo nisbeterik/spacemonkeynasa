@@ -9,6 +9,7 @@
 
       <div class="links">
         <router-link to="/upload">Find Exoplanet</router-link>
+        <router-link to="/about">About Us</router-link>
       </div>
     </nav>
 
