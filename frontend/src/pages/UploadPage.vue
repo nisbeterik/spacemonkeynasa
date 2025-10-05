@@ -52,10 +52,10 @@
           {{ busyTrain ? 'Training…' : 'Train' }}
         </button>
 
-        <div v-if="trainResult" class="panel">
-          <h3>Metrics</h3>
-          <pre>{{ pretty(trainResult.metrics) }}</pre>
-        </div>
+<div v-if="trainDone" class="notice success" role="status" aria-live="polite">
+  <span class="dot" aria-hidden="true"></span>
+  Training complete
+</div>
         <p v-if="errTrain" class="error" role="alert" aria-live="polite">{{ errTrain }}</p>
       </div>
 
@@ -200,6 +200,7 @@ const dragTrain = ref(false)
 const dragCheck = ref(false)
 const dragActual = ref(false)
 const dragPred = ref(false)
+const trainDone = ref(false)
 
 function onPickTrain(e) { trainFile.value = e.target.files?.[0] || null }
 function onPickCheck(e) { checkFile.value = e.target.files?.[0] || null }
@@ -220,10 +221,19 @@ function formatBytes(b = 0) {
 }
 
 async function doTrain() {
-  errTrain.value = ''; trainResult.value = null; busyTrain.value = true
-  try { trainResult.value = await trainCSV(trainFile.value) }
-  catch (e) { errTrain.value = e?.message || 'Train failed' }
-  finally { busyTrain.value = false }
+  errTrain.value = ''
+  trainResult.value = null
+  trainDone.value = false
+  busyTrain.value = true
+  try {
+    // run training but don't display metrics on UI
+    trainResult.value = await trainCSV(trainFile.value)
+    trainDone.value = true
+  } catch (e) {
+    errTrain.value = e?.message || 'Train failed'
+  } finally {
+    busyTrain.value = false
+  }
 }
 
 async function doCheck() {
