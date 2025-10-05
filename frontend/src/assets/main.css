@@ -1,17 +1,35 @@
 @import './base.css';
+html, body, #app {
+  height: 100%;
+  width: 100%;
+}
+body {
+  margin: 0;
+}
+
 #app {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100svh;     /* better on mobile than 100vh */
   margin: 0;
   padding: 0;
-  display: flex;          /* optional: to center content */
-  flex-direction: column; /* optional */
-  justify-content: center; /* optional: vertical centering */
-  align-items: center;     /* optional: horizontal centering */
-  max-width: none;         /* remove previous max-width */
+  display: block;         /* no global grid/flex on the root */
   box-sizing: border-box;
 }
 
+/* Remove the template's desktop centering + grid */
+@media (min-width: 1024px) {
+  body {
+    display: block;        /* not flex; no centering */
+    place-items: initial;  /* reset */
+  }
+  #app {
+    display: block;        /* not grid */
+    grid-template-columns: initial;
+    padding: 0;            /* your layout controls padding */
+  }
+}
+
+/* keep your link styles... */
 a,
 .green {
   text-decoration: none;
@@ -20,20 +38,5 @@ a,
   padding: 3px;
 }
 @media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+  a:hover { background-color: hsla(160, 100%, 37%, 0.2); }
 }
