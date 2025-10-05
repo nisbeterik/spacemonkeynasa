@@ -1,25 +1,18 @@
-"""
-URL configuration for backend project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
+# backend/urls.py
 from django.urls import path
-import views
+from mlapi.views import (index, health, predict, predict_csv,
+                         feature_importances, train_csv, check_exo_csv,
+                         check_exo_status_csv, koi_status, evaluate_pair_csv)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("ping/", views.ping),
-    path("run/", views.run_model)
+    path("", index),
+    path("api/health", health),
+    path("api/predict", predict),
+    path("api/predict_csv", predict_csv),
+    path("api/feature_importances", feature_importances),
+    path("api/train_csv", train_csv),
+    path("api/check_exo_csv", check_exo_csv),
+    path("api/check_exo_status_csv", check_exo_status_csv),
+    path("api/koi_status", koi_status),
+    path("api/evaluate_pair_csv", evaluate_pair_csv),
 ]

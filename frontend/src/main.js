@@ -1,31 +1,23 @@
-import './assets/main.css'
+// src/main.js
+import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import App from './App.vue';
+import HomePage from './pages/HomePage.vue';
+import UploadPage from './pages/UploadPage.vue';
+import AboutUs from './pages/AboutUs.vue'
 
-// import your pages
-import HomePage from './pages/HomePage.vue'
-import UploadPage from './pages/UploadPage.vue'
+import './assets/base.css';
+import './assets/main.css';
 
-// define routes
-const routes = [
-  { path: '/', component: HomePage },
-  { path: '/upload', component: UploadPage }
-]
-
-// create router
 const router = createRouter({
   history: createWebHistory(),
-  routes,
-})
+  routes: [
+    { path: '/', component: HomePage },
+    { path: '/upload', component: UploadPage },
+    { path: '/about', component: AboutUs },
 
-const app = createApp(App)
+  ],
+});
 
-// Disable Vue DevTools
-app.config.devtools = false
-
-// use router
-app.use(router)
-
-app.mount('#app')
+createApp(App).use(router).mount('#app');

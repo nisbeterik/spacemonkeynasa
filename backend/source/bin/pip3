@@ -1,4 +1,4 @@
-#!/home/nadman/Desktop/Personal_Projects/spacemonkeynasa/backend/source/bin/python3
+#!/Users/zahidhasan/Documents/gitHub/spacemonkeynasa/backend/source/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
