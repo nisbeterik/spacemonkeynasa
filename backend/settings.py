@@ -46,13 +46,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://192.168.2.137:5173",
+    "https://spacemonkeysnasa.netlify.app",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://spacemonkeynasa.onrender.com"
+    "https://spacemonkeynasa.onrender.com",
+    "https://spacemonkeysnasa.netlify.app",
 ]
 
 MIDDLEWARE = [
