@@ -14,9 +14,51 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# backend/urls.py
 from django.contrib import admin
 from django.urls import path
 
+from backend.mlapi.views import (
+    index,
+    health,
+    predict,
+    predict_csv,
+    feature_importances,
+    train_csv,
+    check_exo_csv,
+    check_exo_status_csv,
+    koi_status,
+    evaluate_pair_csv,   # <-- pairwise compare endpoint
+)
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("", index),
+    path("admin/", admin.site.urls),
+
+    # health
+    path("api/health", health),
+
+    # predictions
+    path("api/predict", predict),
+    path("api/predict_csv", predict_csv),
+    path("api/feature_importances", feature_importances),
+
+    # training
+    path("api/train_csv", train_csv),
+
+    # checking / enrichment
+    path("api/check_exo_csv", check_exo_csv),
+    path("api/check_exo_status_csv", check_exo_status_csv),
+
+    # KOI lookup
+    path("api/koi_status", koi_status),
+
+    # evaluation (compare two CSV files: actual vs exo_check_results.csv)
+    path("api/evaluate_pair_csv", evaluate_pair_csv),
 ]
+
+
+
+
+
+

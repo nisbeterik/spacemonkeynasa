@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/nadman/Desktop/Personal_Projects/spacemonkeynasa/backend/source
+set -gx VIRTUAL_ENV /Users/zahidhasan/Documents/gitHub/spacemonkeynasa/backend/source
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
