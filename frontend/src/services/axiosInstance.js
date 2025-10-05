@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const base =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE) ||
-  'http://192.168.3.41:8000';
+  'https://spacemonkeynasa-1.onrender.com/';
 
 const api = axios.create({
   baseURL: base,
